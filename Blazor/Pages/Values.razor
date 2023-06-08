@@ -1,0 +1,37 @@
+﻿@page "/values"
+@using Microsoft.AspNetCore.SignalR.Client
+@inject HttpClient Http
+
+<h3>Values</h3>
+
+@{
+    foreach (var i in values!)
+    {
+        <h1>@i</h1>
+    }
+}
+
+@code {
+
+    private List<int>? values = new ();
+
+    protected override async Task OnInitializedAsync()
+    {
+        values = await Http.GetFromJsonAsync<List<int>>("Values");
+
+        await ConnectToHub();
+    }
+
+    private async Task ConnectToHub()
+    {
+        var connection = new HubConnectionBuilder().WithUrl("https://localhost:7090/values-hub").Build();
+
+        connection.On<int>("NewValue", (int i) =>
+        {
+            values.Add(i);
+            StateHasChanged();  
+        });
+
+        await connection.StartAsync();
+    }
+}
